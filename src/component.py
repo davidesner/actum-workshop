@@ -47,7 +47,7 @@ class Component(ComponentBase):
             logging.info("Hello World")
 
         logging.warning("This is a warning message")
-
+        logging.debug("This is a debug message")
 
         # # ####### EXAMPLE TO REMOVE
         # # check for missing configuration parameters
