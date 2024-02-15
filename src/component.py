@@ -2,12 +2,11 @@
 Template Component main class.
 
 """
-import csv
 import logging
-from datetime import datetime
 
-from keboola.component.base import ComponentBase
+from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
+from keboola.component.sync_actions import SelectElement
 
 # configuration variables
 KEY_API_TOKEN = '#api_token'
@@ -33,10 +32,28 @@ class Component(ComponentBase):
     def __init__(self):
         super().__init__()
 
+    @sync_action('validate_connection')
+    def test_connection(self):
+        logging.info("asads")
+
+    @sync_action('test_dropdown')
+    def test_dropdown(self):
+        return [SelectElement('value', 'Some nice value')]
+
     def run(self):
         """
         Main execution code
         """
+        self.test_connection()
+        files = self.get_input_files_definitions(only_latest_files=False)
+
+        for file in files:
+            logging.info(f'File: {file.name} with path: {file.full_path}')
+
+        file_out = self.create_out_file_definition('test.dat', tags=['test'], is_permanent=False)
+
+        last_state = self.get_state_file()
+        logging.info(last_state)
 
         input_tables = self.get_input_tables_definitions()
         logging.info(input_tables[0].full_path)
@@ -48,6 +65,19 @@ class Component(ComponentBase):
 
         logging.warning("This is a warning message")
         logging.debug("This is a debug message")
+
+        out_table = self.create_out_table_definition('output.csv', incremental=True, primary_key=['timestamp'],
+                                                     columns=['timestamp'])
+
+        with open(out_table.full_path, mode='w+') as out_file:
+            out_file.write("Hello World")
+
+        self.write_manifest(out_table)
+
+        state = {"last_run": "2020-01-01"}
+        self.write_state_file(state)
+
+        self.get_input_files_definitions()
 
         # # ####### EXAMPLE TO REMOVE
         # # check for missing configuration parameters
